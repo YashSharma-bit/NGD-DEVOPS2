@@ -1,0 +1,154 @@
+# ============================================================
+# India Regional Development Analytics System
+# Central Configuration
+# ============================================================
+
+project:
+  name: "India Regional Development Analytics System"
+  version: "1.0.0"
+  description: "Production-grade analytics platform covering all cities and districts of India"
+
+# ── Database ─────────────────────────────────────────────────
+postgres:
+  host: "${POSTGRES_HOST:-localhost}"
+  port: 5432
+  database: "india_dev_analytics"
+  user: "${POSTGRES_USER:-analyst}"
+  password: "${POSTGRES_PASSWORD}"
+  pool_size: 10
+  max_overflow: 20
+  schema: "public"
+  srid: 4326                   # WGS-84
+
+neo4j:
+  uri: "${NEO4J_URI:-bolt://localhost:7687}"
+  user: "${NEO4J_USER:-neo4j}"
+  password: "${NEO4J_PASSWORD}"
+  database: "india"
+  max_connection_pool_size: 50
+
+# ── Data Sources ──────────────────────────────────────────────
+data_sources:
+
+  # Census of India 2011 — Primary Tables (open via data.gov.in / censusindia.gov.in)
+  census_primary_abstract:
+    url: "https://censusindia.gov.in/nada/index.php/catalog/42584/download/46012/DDW_PCA0000_2011_Indiastatedist.xlsx"
+    local_path: "data/raw/census_primary_abstract.xlsx"
+    description: "Primary Census Abstract — district level population, literacy, workers"
+
+  census_houselisting:
+    url: "https://censusindia.gov.in/nada/index.php/catalog/42585/download/46016/DDW_HH0000_2011_Indiastatedist.xlsx"
+    local_path: "data/raw/census_houselisting.xlsx"
+    description: "Houselisting & Housing Census — assets, amenities, construction material"
+
+  census_economic:
+    url: "https://censusindia.gov.in/nada/index.php/catalog/42590"
+    local_path: "data/raw/census_economic.xlsx"
+    description: "Economic tables — workers by industry, marginal workers"
+
+  # Administrative boundaries (Datameet / GADM)
+  shapefiles_district:
+    url: "https://github.com/datameet/maps/raw/master/Districts/Census_2011/2011_Dist.zip"
+    local_path: "data/shapefiles/districts_2011.zip"
+    description: "District-level shapefiles — Census 2011 aligned (Datameet / Spatial Open Data)"
+
+  shapefiles_state:
+    url: "https://github.com/datameet/maps/raw/master/States/Admin2.zip"
+    local_path: "data/shapefiles/states.zip"
+    description: "State-level administrative boundaries"
+
+  shapefiles_subdistrict:
+    url: "https://github.com/datameet/maps/raw/master/SubDistricts/census_subdistrict_2011.zip"
+    local_path: "data/shapefiles/subdistricts_2011.zip"
+    description: "Sub-district (Tehsil/Taluka) shapefiles"
+
+  # GADM fallback (if Datameet is unreachable)
+  gadm_india:
+    url: "https://geodata.ucdavis.edu/gadm/gadm4.1/shp/gadm41_IND_shp.zip"
+    local_path: "data/shapefiles/gadm41_IND.zip"
+    description: "GADM 4.1 India shapefiles — States (L1) + Districts (L2) + Sub-districts (L3)"
+
+  # Nighttime lights proxy (VIIRS 2022 — NASA EarthData, requires free registration)
+  nighttime_lights:
+    url: "https://eogdata.mines.edu/nighttime_light/annual/v22/2022/VNL_v22_npp-j01_2022_global_vcmslcfg_c202303062300.average_masked.dat.tif.gz"
+    local_path: "data/raw/nighttime_lights_2022.tif.gz"
+    description: "VIIRS Annual Nighttime Lights — urbanization proxy"
+    requires_auth: false        # EarthData public access since 2023
+
+  # data.gov.in open datasets
+  district_gdp:
+    url: "https://data.gov.in/resource/district-domestic-product-andhra-pradesh"
+    api_key_env: "DATA_GOV_IN_API_KEY"
+    local_path: "data/raw/district_gdp.csv"
+    description: "District Domestic Product estimates from State Directorates"
+
+  election_turnout:
+    url: "https://eci.gov.in/files/file/13750-general-election-to-lok-sabha-2019/"
+    local_path: "data/raw/election_2019.xlsx"
+    description: "ECI 2019 Lok Sabha constituency-level turnout"
+
+# ── ETL Pipeline ──────────────────────────────────────────────
+etl:
+  batch_size: 5000             # rows processed per chunk
+  parallel_workers: 4
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  request_timeout: 120
+  max_file_size_mb: 500
+
+  fuzzy_match_threshold: 85    # rapidfuzz score threshold for district name harmonization
+  encoding_fallbacks:
+    - "utf-8"
+    - "latin-1"
+    - "cp1252"
+
+# ── Analytics ─────────────────────────────────────────────────
+analytics:
+  development_index:
+    weights:
+      literacy_rate: 0.20
+      electrification_rate: 0.15
+      safe_drinking_water: 0.15
+      toilet_access: 0.10
+      female_literacy_rate: 0.10
+      worker_participation_rate: 0.10
+      banking_access: 0.10
+      internet_access: 0.05
+      motorable_road_access: 0.05
+    normalization: "min_max"   # options: min_max | zscore | robust
+
+  clustering:
+    algorithm: "kmeans"        # options: kmeans | dbscan | agglomerative
+    n_clusters: 6              # Aspirational / Developing / Transitioning / Growing / Advanced / Metro
+    random_state: 42
+
+  inequality:
+    metrics:
+      - "gini_coefficient"
+      - "coefficient_of_variation"
+      - "theil_index"
+      - "palma_ratio"
+
+# ── API ───────────────────────────────────────────────────────
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+  reload: false
+  log_level: "info"
+  cors_origins:
+    - "*"
+  rate_limit:
+    requests_per_minute: 120
+    burst: 20
+  cache:
+    backend: "redis"
+    ttl_seconds: 3600
+
+# ── Logging ───────────────────────────────────────────────────
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  file: "logs/pipeline.log"
+  max_bytes: 10485760          # 10 MB
+  backup_count: 5
