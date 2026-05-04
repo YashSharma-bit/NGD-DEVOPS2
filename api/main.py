@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
     logger.info("API shutdown.")
 
 app = FastAPI(
-    title="Bangladesh Regional Development Analytics API",
+    title=" Regional Development Analytics API",
     description="Production-grade REST API for querying development indicators, demographics, and economic data for all cities, districts, and states of India. Data source: Census of India 2011, LGD, Houselisting Census.",
     version="1.0.0",
     docs_url="/docs",

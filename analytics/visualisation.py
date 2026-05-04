@@ -121,7 +121,7 @@ def plot_choropleth_static(gdf: gpd.GeoDataFrame, output_dir: Path) -> None:
     )
 
     ax.set_title(
-        " Regional Development Index — District Level (Census 2011)",
+        "India Regional Development Index — District Level (Census 2011)",
         fontsize=16,
         fontweight="bold",
         color="white",
