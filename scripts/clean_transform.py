@@ -72,7 +72,12 @@ def normalise_name(name) -> str:
         s = unidecode(name)
     except Exception:
         s = name
+
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+
+    # 🔥 ADD THIS LINE (YOUR FIX)
+    s = s.replace("Dist.", "District")
+
     s = _REMOVE_PAREN.sub("", s).strip().title()
     s = _MULTI_SPACE.sub(" ", s).strip()
     return s
@@ -451,3 +456,9 @@ def main(write_csv_flag: bool, debug: bool):
 
 if __name__ == "__main__":
     main()
+
+def fuzzy_match(a, b):
+    """
+    Simple matching logic for demo
+    """
+    return a.strip().lower() == b.strip().lower()
