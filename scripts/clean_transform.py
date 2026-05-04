@@ -67,19 +67,24 @@ _MULTI_SPACE  = re.compile(r"\s+")
 def normalise_name(name) -> str:
     if not isinstance(name, str) or not name.strip():
         return ""
+
     try:
         from unidecode import unidecode
         s = unidecode(name)
     except Exception:
         s = name
 
+    s = s.strip()  # 🔥 fix spaces
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
 
-    # 🔥 ADD THIS LINE (YOUR FIX)
-    s = s.replace("Dist.", "District")
+    s = s.lower()  # 🔥 normalize case
+
+    # 🔥 FIX abbreviation properly
+    s = s.replace("dist.", "district")
 
     s = _REMOVE_PAREN.sub("", s).strip().title()
     s = _MULTI_SPACE.sub(" ", s).strip()
+
     return s
 
 
