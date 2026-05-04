@@ -19,10 +19,12 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                echo "🧪 Running tests..."
-                bat 'pytest tests/ || exit 1'
+       stage('Test') {
+           steps {
+              echo "🧪 Running tests..."
+
+            
+              bat 'set PYTHONPATH=%CD% && pytest tests/ || exit 1'
             }
         }
 
