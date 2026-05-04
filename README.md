@@ -550,3 +550,6 @@ Unmatched districts are logged with `logger.warning()` so you can manually inspe
 
 Data: Open Government Data (OGD) — Government of India  
 Code: MIT
+
+
+Auto trigger test
