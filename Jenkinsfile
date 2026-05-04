@@ -1,15 +1,16 @@
 pipeline {
     agent any
 
-    stages {
+    stage('Checkout') {
+    steps {
+        echo "🔄 Cleaning workspace and fetching latest code..."
 
-        stage('Checkout') {
-            steps {
-                echo "🔄 Fetching code..."
-                checkout scm
-            }
-        }
+        deleteDir()
 
+        git branch: 'main',
+            url: 'https://github.com/YashSharma-bit/NGD-DEVOPS2'
+    }
+}
         stage('Build') {
             steps {
                 echo "🔧 Build step..."
