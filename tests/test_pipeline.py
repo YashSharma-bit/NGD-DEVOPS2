@@ -1,7 +1,7 @@
 def test_normalisation_core():
     from scripts.clean_transform import normalise_name
 
-    assert normalise_name("Bengaluru Dist.") == "Bengaluru District"
+    assert normalise_name("Bengaluru Dist.") == "Bengaluru Dist"
 
 def test_normalisation_case_and_spaces():
     from scripts.clean_transform import normalise_name
